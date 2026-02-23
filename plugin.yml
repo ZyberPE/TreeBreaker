@@ -1,0 +1,16 @@
+name: TreeDestroyer
+main: TreeDestroyer\Main
+version: 1.1.0
+api: 5.0.0
+author: ZyberPE
+description: TreeDestroyer enchant system
+
+commands:
+  treedestroyer:
+    description: Apply TreeDestroyer enchant to your axe
+    usage: "/treedestroyer"
+    permission: treedestroyer.use
+
+permissions:
+  treedestroyer.use:
+    default: op
