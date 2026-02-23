@@ -7,7 +7,9 @@ namespace TreeDestroyer;
 use pocketmine\plugin\PluginBase;
 use pocketmine\event\Listener;
 use pocketmine\event\block\BlockBreakEvent;
+use pocketmine\block\Block;
 use pocketmine\block\Wood;
+use pocketmine\block\Leaves;
 use pocketmine\block\VanillaBlocks;
 use pocketmine\world\Position;
 use pocketmine\world\World;
@@ -73,15 +75,15 @@ class Main extends PluginBase implements Listener {
             return;
         }
 
-        $this->breakConnectedLogs($block->getPosition(), $block->getPosition()->getWorld());
+        $this->breakTree($block->getPosition(), $block->getPosition()->getWorld());
     }
 
     /**
-     * Recursively breaks connected wood blocks (trees)
-     * Fixed Vector3 vs Position issue for PMMP 5
+     * Recursively breaks entire tree including leaves
+     * Drops wood blocks, leaves, apples, and saplings naturally
      */
-    private function breakConnectedLogs(Vector3 $vec, World $world) : void {
-        // Ensure $pos is a Position object
+    private function breakTree(Vector3 $vec, World $world) : void {
+        // Convert to Position if needed
         if(!$vec instanceof Position){
             $pos = new Position($vec->x, $vec->y, $vec->z, $world);
         } else {
@@ -90,22 +92,25 @@ class Main extends PluginBase implements Listener {
 
         $block = $world->getBlock($pos);
 
-        if(!$block instanceof Wood){
-            return;
-        }
+        if($block instanceof Wood || $block instanceof Leaves){
+            // Drop naturally
+            foreach($block->getDrops() as $drop){
+                $world->dropItem($pos, $drop);
+            }
 
-        $world->setBlock($pos, VanillaBlocks::AIR());
+            $world->setBlock($pos, VanillaBlocks::AIR());
 
-        // Recursively check neighboring blocks
-        foreach([
-            $pos->add(1,0,0),
-            $pos->add(-1,0,0),
-            $pos->add(0,1,0),
-            $pos->add(0,-1,0),
-            $pos->add(0,0,1),
-            $pos->add(0,0,-1),
-        ] as $next){
-            $this->breakConnectedLogs($next, $world);
+            // Check surrounding blocks recursively
+            foreach([
+                $pos->add(1,0,0),
+                $pos->add(-1,0,0),
+                $pos->add(0,1,0),
+                $pos->add(0,-1,0),
+                $pos->add(0,0,1),
+                $pos->add(0,0,-1),
+            ] as $next){
+                $this->breakTree($next, $world);
+            }
         }
     }
 }
