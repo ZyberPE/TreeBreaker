@@ -75,15 +75,16 @@ class Main extends PluginBase implements Listener {
             return;
         }
 
-        $this->breakTree($block->getPosition(), $block->getPosition()->getWorld());
+        // Use the player's axe as tool for correct drops
+        $this->breakTree($block->getPosition(), $block->getPosition()->getWorld(), $item);
+        $event->cancel(); // prevent double drops
     }
 
     /**
-     * Recursively breaks entire tree including leaves
-     * Drops wood blocks, leaves, apples, and saplings naturally
+     * Recursively breaks all connected wood and leaves, dropping items
      */
-    private function breakTree(Vector3 $vec, World $world) : void {
-        // Convert to Position if needed
+    private function breakTree(Vector3 $vec, World $world, Axe $tool) : void {
+        // Ensure Position object
         if(!$vec instanceof Position){
             $pos = new Position($vec->x, $vec->y, $vec->z, $world);
         } else {
@@ -93,23 +94,25 @@ class Main extends PluginBase implements Listener {
         $block = $world->getBlock($pos);
 
         if($block instanceof Wood || $block instanceof Leaves){
-            // Drop naturally
-            foreach($block->getDrops() as $drop){
+            // Drop items using the player's axe
+            foreach($block->getDrops($tool) as $drop){
                 $world->dropItem($pos, $drop);
             }
 
             $world->setBlock($pos, VanillaBlocks::AIR());
 
-            // Check surrounding blocks recursively
+            // Recursively break surrounding blocks (6 directions + diagonals for leaves)
             foreach([
-                $pos->add(1,0,0),
-                $pos->add(-1,0,0),
-                $pos->add(0,1,0),
-                $pos->add(0,-1,0),
-                $pos->add(0,0,1),
-                $pos->add(0,0,-1),
+                $pos->add(1,0,0), $pos->add(-1,0,0),
+                $pos->add(0,1,0), $pos->add(0,-1,0),
+                $pos->add(0,0,1), $pos->add(0,0,-1),
+                // Diagonals for leaves
+                $pos->add(1,1,0), $pos->add(-1,1,0),
+                $pos->add(0,1,1), $pos->add(0,1,-1),
+                $pos->add(1,1,1), $pos->add(-1,1,-1),
+                $pos->add(1,1,-1), $pos->add(-1,1,1),
             ] as $next){
-                $this->breakTree($next, $world);
+                $this->breakTree($next, $world, $tool);
             }
         }
     }
