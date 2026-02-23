@@ -10,6 +10,8 @@ use pocketmine\event\block\BlockBreakEvent;
 use pocketmine\block\Wood;
 use pocketmine\block\VanillaBlocks;
 use pocketmine\world\Position;
+use pocketmine\world\World;
+use pocketmine\math\Vector3;
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
 use pocketmine\player\Player;
@@ -28,7 +30,7 @@ class Main extends PluginBase implements Listener {
         if($command->getName() === "treedestroyer"){
 
             if(!$sender instanceof Player){
-                $sender->sendMessage("Use this in game.");
+                $sender->sendMessage("Use this in-game.");
                 return true;
             }
 
@@ -74,7 +76,18 @@ class Main extends PluginBase implements Listener {
         $this->breakConnectedLogs($block->getPosition(), $block->getPosition()->getWorld());
     }
 
-    private function breakConnectedLogs(Position $pos, $world) : void {
+    /**
+     * Recursively breaks connected wood blocks (trees)
+     * Fixed Vector3 vs Position issue for PMMP 5
+     */
+    private function breakConnectedLogs(Vector3 $vec, World $world) : void {
+        // Ensure $pos is a Position object
+        if(!$vec instanceof Position){
+            $pos = new Position($vec->x, $vec->y, $vec->z, $world);
+        } else {
+            $pos = $vec;
+        }
+
         $block = $world->getBlock($pos);
 
         if(!$block instanceof Wood){
@@ -83,6 +96,7 @@ class Main extends PluginBase implements Listener {
 
         $world->setBlock($pos, VanillaBlocks::AIR());
 
+        // Recursively check neighboring blocks
         foreach([
             $pos->add(1,0,0),
             $pos->add(-1,0,0),
