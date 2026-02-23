@@ -1,0 +1,17 @@
+# TreeDestroyer Config
+
+# Command cooldown in seconds
+cooldown: 60
+
+# Messages
+messages:
+  enchant_applied: "&aTreeDestroyer enchant applied! ✨"
+  cooldown: "&cYou must wait {time} seconds before using this command again."
+  hold_axe: "&cYou must be holding an axe."
+
+# Custom axe name & lore
+axe:
+  name: "&bTreeDestroyer Axe"
+  lore:
+    - "&7Breaks the entire tree including leaves"
+    - "&7Drops logs, saplings, and apples"
